@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #282c34;
+            touch-action: none;
+        }
+        canvas {
+            background-color: #000;
+        }
+        .controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .mobile-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .mobile-controls button {
+            padding: 10px;
+            font-size: 18px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div class="controls">
+        <button onclick="changeSpeed(50)">Fast</button>
+        <button onclick="changeSpeed(100)">Normal</button>
+        <button onclick="changeSpeed(200)">Slow</button>
+    </div>
+    <div class="mobile-controls">
+        <button onclick="setDirection(0, -10)">Up</button>
+        <div>
+            <button onclick="setDirection(-10, 0)">Left</button>
+            <button onclick="setDirection(10, 0)">Right</button>
+        </div>
+        <button onclick="setDirection(0, 10)">Down</button>
+    </div>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = 600;
+        canvas.height = 400;
+        
+        let snake = [{ x: 50, y: 50 }];
+        let direction = { x: 10, y: 0 };
+        let food = { x: 300, y: 200 };
+        let snakeSize = 10;
+        let snakeImage = new Image();
+        snakeImage.src = "https://i.imgur.com/OX5fPKQ.png"; // Replace with realistic snake texture
+        let gameSpeed = 100;
+        let isPaused = false;
+        
+        document.addEventListener("keydown", changeDirection);
+        document.addEventListener("keydown", togglePause);
+        
+        function changeDirection(event) {
+            const key = event.key;
+            if (key === "ArrowUp" && direction.y === 0) direction = { x: 0, y: -10 };
+            else if (key === "ArrowDown" && direction.y === 0) direction = { x: 0, y: 10 };
+            else if (key === "ArrowLeft" && direction.x === 0) direction = { x: -10, y: 0 };
+            else if (key === "ArrowRight" && direction.x === 0) direction = { x: 10, y: 0 };
+        }
+        
+        function togglePause(event) {
+            if (event.code === "Space") {
+                isPaused = !isPaused;
+                if (!isPaused) gameLoop();
+            }
+        }
+        
+        function setDirection(x, y) {
+            if ((x !== 0 && direction.x === 0) || (y !== 0 && direction.y === 0)) {
+                direction = { x, y };
+            }
+        }
+        
+        function drawSnake() {
+            snake.forEach((segment, index) => {
+                ctx.drawImage(snakeImage, segment.x, segment.y, snakeSize, snakeSize);
+            });
+        }
+        
+        function drawFood() {
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, 10, 10);
+        }
+        
+        function updateSnake() {
+            const newHead = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+            
+            // Wrap the snake when it goes out of bounds
+            if (newHead.x < 0) newHead.x = canvas.width - 10;
+            else if (newHead.x >= canvas.width) newHead.x = 0;
+            if (newHead.y < 0) newHead.y = canvas.height - 10;
+            else if (newHead.y >= canvas.height) newHead.y = 0;
+            
+            snake.unshift(newHead);
+            if (newHead.x === food.x && newHead.y === food.y) {
+                food = { x: Math.floor(Math.random() * 60) * 10, y: Math.floor(Math.random() * 40) * 10 };
+                snakeSize += 0.5; // Increase snake size slightly
+            } else {
+                snake.pop();
+            }
+        }
+        
+        function gameLoop() {
+            if (isPaused) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawFood();
+            drawSnake();
+            updateSnake();
+            setTimeout(gameLoop, gameSpeed);
+        }
+        
+        function changeSpeed(speed) {
+            gameSpeed = speed;
+        }
+        
+        gameLoop();
+    </script>
+</body>
+</html>
